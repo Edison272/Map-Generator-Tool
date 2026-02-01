@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Analytics;
 using UnityEngine.Tilemaps;
 
 using Random = UnityEngine.Random;
@@ -48,8 +50,7 @@ public class MapGenScript : MonoBehaviour
         DrawMap();
     }
 
-    // Update is called once per frame
-    void Update()
+    void OnDrawGizmosSelected()
     {
         if (show_chunks)
         {
@@ -67,21 +68,24 @@ public class MapGenScript : MonoBehaviour
         }
         if (show_critical_chunks)
         {
-            DrawChunk(START_POS, Color.black);
-            DrawChunk(final_chunk, Color.red);
-            DrawChunk(spawn_chunk, Color.green);
-            foreach (MapChunk chunk in critical_locs)
+            //DrawChunk(START_POS, Color.black);
+            if (all_chunks.Keys.Count > 0) // only perform if something actually geenrated
             {
-                if (chunk is MapQuad)
+                DrawChunk(final_chunk, Color.red);
+                DrawChunk(spawn_chunk, Color.green);
+                foreach (MapChunk chunk in critical_locs)
                 {
-                    MapQuad quad = (MapQuad)chunk;
-                    DrawQuad(quad.four_corners, Color.yellow);
-                    DrawStar(quad.position, Color.yellow);
-                }
+                    if (chunk is MapQuad)
+                    {
+                        MapQuad quad = (MapQuad)chunk;
+                        DrawQuad(quad.four_corners, Color.yellow);
+                        DrawStar(quad.position, Color.yellow);
+                    }
 
-                foreach(MapChunk other_chunk in critical_locs)
-                {
-                    Debug.DrawLine((Vector2)chunk.position * gen_preset.chunk_size, (Vector2)other_chunk.position * gen_preset.chunk_size);
+                    foreach(MapChunk other_chunk in critical_locs)
+                    {
+                        Debug.DrawLine((Vector2)chunk.position * gen_preset.chunk_size, (Vector2)other_chunk.position * gen_preset.chunk_size);
+                    }
                 }
             }
         }
@@ -406,5 +410,12 @@ public class MapGenScript : MonoBehaviour
         }
     }
 
+    #endregion
+
+    #region Serialization
+    public void OnValidate()
+    {
+        gen_preset.OnGenValidate();
+    }
     #endregion
 }

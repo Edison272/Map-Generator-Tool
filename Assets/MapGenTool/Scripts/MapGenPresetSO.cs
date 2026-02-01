@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
@@ -25,7 +22,7 @@ public class MapGenPreset
     public int objectives = 3;
     public int minor_poi = 7; // extra goodies that might appear on the map
 
-    public void OnValidate()
+    public void OnGenValidate()
     {
         og_max = max_chunk_branching;
         if (adj_type == AdjacentType.four_directions)
