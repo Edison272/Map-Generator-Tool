@@ -29941,8 +29941,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Ground: {fileID: 253556080}
   Wall: {fileID: 1504899526}
-  ground_tile: {fileID: 11400000, guid: 64fac46e82ece444b9a08e296af1196d, type: 2}
-  wall_tile: {fileID: 11400000, guid: 55957d4cf12a92e49ac4a69aecc93b90, type: 2}
+  ground_tiles:
+  - {fileID: 11400000, guid: 897a2c041af1c564f93b48e5bce40260, type: 2}
+  - {fileID: 11400000, guid: 64fac46e82ece444b9a08e296af1196d, type: 2}
+  - {fileID: 11400000, guid: 053f825ad105b434cb478b2a4aec934f, type: 2}
+  - {fileID: 11400000, guid: b2faa5f469b6948458d2f8aef33059e9, type: 2}
+  wall_tile: {fileID: 11400000, guid: c6e2bc0176d8fd541967c81e17eb50e6, type: 2}
   gen_preset:
     map_chunks: 40
     chunk_size: 8
@@ -29954,6 +29958,7 @@ MonoBehaviour:
     check_points: 3
     objectives: 3
     minor_poi: 7
+  perlin_scale: 0
   show_chunks: 0
   show_adj_chunks: 1
   show_critical_chunks: 1

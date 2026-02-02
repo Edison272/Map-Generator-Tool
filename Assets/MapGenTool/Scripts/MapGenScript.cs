@@ -13,9 +13,10 @@ public class MapGenScript : MonoBehaviour
     [Header("Tilemaps")]
     [SerializeField] Tilemap Ground;
     [SerializeField] Tilemap Wall;
-    [Header("Tiles")]
-    [SerializeField] TileBase ground_tile;
+    [Header("Drawing Tiles")]
+    [SerializeField] TileBase[] ground_tiles;
     [SerializeField] TileBase wall_tile;
+    [SerializeField] TileBase path_tile;
     [Header("Generation Presets")]
     public MapGenPreset gen_preset;
     public static readonly Vector2Int START_POS = Vector2Int.zero;
@@ -35,6 +36,8 @@ public class MapGenScript : MonoBehaviour
 
     HashSet<Vector3Int> draw_ground = new HashSet<Vector3Int>();
     HashSet<Vector3Int> draw_border = new HashSet<Vector3Int>();
+    [Header("Draw Map")]
+    public float perlin_scale = 10;
 
     [Header("Gizmo Stuff")]
     [SerializeField] bool show_chunks = true;
@@ -47,9 +50,11 @@ public class MapGenScript : MonoBehaviour
         critical_locs = new MapChunk[2 + gen_preset.objectives];
         GenerateChunks();
         GeneratePOI();
+        GetPOIPaths();
         DrawMap();
     }
 
+    #region Gizmos
     void OnDrawGizmosSelected()
     {
         if (show_chunks)
@@ -81,6 +86,10 @@ public class MapGenScript : MonoBehaviour
                         DrawQuad(quad.four_corners, Color.yellow);
                         DrawStar(quad.position, Color.yellow);
                     }
+                    else if (chunk.position != spawn_chunk && chunk.position != final_chunk)
+                    {
+                        DrawChunk(Vector2Int.FloorToInt(chunk.position), Color.yellow);
+                    }
 
                     foreach(MapChunk other_chunk in critical_locs)
                     {
@@ -96,6 +105,7 @@ public class MapGenScript : MonoBehaviour
             }
         }
     }
+    #endregion
 
     #region Generate Chunks
     private void GenerateChunks() // generate the chunks and declare the start & final pos
@@ -231,27 +241,13 @@ public class MapGenScript : MonoBehaviour
     #region Generate POI
     private void GeneratePOI() // generate potential POI based off of chunks in the map
     {
-        quads.Clear();
-        foreach (Vector2Int chunk in all_chunks.Keys)
-        {
-            // add all four quads to the hashset. it'll figure it out
-            Vector2Int right = chunk + Directions2D.eight_directions[0];
-            Vector2Int top_corner = chunk + Directions2D.eight_directions[1];
-            Vector2Int up = chunk + Directions2D.eight_directions[2];
-            if (all_chunks.Keys.Contains(right) && all_chunks.Keys.Contains(top_corner) && all_chunks.Keys.Contains(up)) 
-            {
-                
-                quads.Add(new MapQuad(chunk, right, top_corner, up));
-            }
-        }
-
         for (int i = 2; i < critical_locs.Length; i++) // fill in betweens of the list
         {
             float highest_short = -Mathf.Infinity;
-            foreach(MapQuad mq in quads)
+            foreach(MapChunk mc in all_chunks.Values)
             {   
                 float shortest_dist = Mathf.Infinity;
-                if (Array.IndexOf(critical_locs, mq) != -1)
+                if (Array.IndexOf(critical_locs, mc) != -1)
                 {
                     continue;
                 }
@@ -262,7 +258,7 @@ public class MapGenScript : MonoBehaviour
                     {
                         continue; // exit loop bc theres no more critical locs to compare to
                     }
-                    float dist = (mq.position - critical_locs[l].position).sqrMagnitude;
+                    float dist = (mc.position - critical_locs[l].position).sqrMagnitude;
                     if (dist < shortest_dist)
                     {
                         shortest_dist = dist;
@@ -271,16 +267,14 @@ public class MapGenScript : MonoBehaviour
 
                 if (shortest_dist > highest_short)
                 {
-                    critical_locs[i] = mq;
+                    critical_locs[i] = mc;
                     highest_short = shortest_dist;
                 }
             }
         }
-
     }
-#endregion
-
-    private void Pathfind() // declare pathway chunks between all POI
+    #endregion
+    private void GetPOIPaths() // declare pathway chunks between all POI
     {
         
     }
@@ -322,17 +316,23 @@ public class MapGenScript : MonoBehaviour
             }
         }
 
-        foreach(Vector3Int chunk in draw_ground)
-        {
-            Ground.SetTile(chunk, ground_tile);
-        }
         foreach(Vector3Int chunk in draw_border)
         {
-            if (!Ground.GetTile(chunk))
+            if (!draw_ground.Contains(chunk))
             {
                 Wall.SetTile(chunk, wall_tile);
             }
             
+        }
+
+        Vector2 perlin_offset = new Vector2(Random.Range(100, -100), Random.Range(100, -100));
+        foreach(Vector3Int chunk in draw_ground)
+        {
+            float x_cord = chunk.x / perlin_scale + 0.00000001f;
+            float y_cord = chunk.y / perlin_scale + 0.00000001f;
+            float sample = Mathf.PerlinNoise(perlin_offset.x + x_cord, perlin_offset.y + y_cord);
+            TileBase new_tile = ground_tiles[(int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1)];
+            Ground.SetTile(chunk, new_tile);
         }
     }
 #endregion
