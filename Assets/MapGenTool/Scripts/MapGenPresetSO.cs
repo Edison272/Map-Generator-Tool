@@ -15,7 +15,7 @@ public class MapGenPreset
     private int og_max = 6;
     [Range(1, 8)] public int min_chunk_branching = 3;
     [SerializeField] AdjacentType adj_type = AdjacentType.four_directions;
-    public bool four_adj_tiles = true;
+    public bool four_adj_tiles {get; private set;} = true ;
 
     [Header("Map Objects")]
     public int check_points = 3;

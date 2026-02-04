@@ -30,6 +30,8 @@ public class MapGenScript : MonoBehaviour
     public Vector2 map_center {get; private set;} // duh
 
     public MapChunk[] critical_locs {get; private set;} // start & final + POI
+    // bounds int for critical_los
+    BoundsInt crit_loc_bounds;
 
     // format is chunk, chunk + 1,0 , chunk + 1,1 , chunk + 0,1
     public HashSet<MapQuad> quads {get; private set;} = new HashSet<MapQuad>();
@@ -272,11 +274,57 @@ public class MapGenScript : MonoBehaviour
                 }
             }
         }
+
+        // get bounds of critical locs
+        int x_max = -10000, x_min = 10000, y_max = -10000, y_min = 10000;
+        foreach(MapChunk chunk in critical_locs)
+        {
+            Vector2 chunk_pos = chunk.position;
+            if (chunk_pos.x > x_max)
+            {
+                x_max = (int)chunk_pos.x;
+            } 
+            else if (chunk_pos.x < x_min)
+            {
+                x_min = (int)chunk_pos.x;
+            }
+            if (chunk_pos.y > y_max)
+            {
+                y_max = (int)chunk_pos.x;
+            } 
+            else if (chunk_pos.y < y_min)
+            {
+                y_min = (int)chunk_pos.y;
+            }
+        }
+        crit_loc_bounds = new BoundsInt(x_min, y_min, 0, x_max, y_max, 0);
     }
     #endregion
     private void GetPOIPaths() // declare pathway chunks between all POI
     {
-        
+        // do some delauney crap with a Bowyer Watson FX
+        TriangleSet super_tri = new TriangleSet(
+            new Vector2(0, crit_loc_bounds.yMax * 100),
+            new Vector2(crit_loc_bounds.xMax * 100, crit_loc_bounds.yMin * 100),
+            new Vector2(crit_loc_bounds.xMin * 100, crit_loc_bounds.yMin * 100)
+        );
+
+        foreach (MapChunk chunk in critical_locs)
+        {
+            foreach (MapChunk other_chunk in critical_locs)
+            {
+                if (other_chunk != chunk)
+                {
+                    foreach(MapChunk other_other_chunk in critical_locs)
+                    {
+                        if (other_chunk != chunk && other_other_chunk != chunk)
+                        {
+                            
+                        }
+                    }
+                }
+            }
+        }
     }
 
 #region Draw Map
@@ -328,9 +376,10 @@ public class MapGenScript : MonoBehaviour
         Vector2 perlin_offset = new Vector2(Random.Range(100, -100), Random.Range(100, -100));
         foreach(Vector3Int chunk in draw_ground)
         {
-            float x_cord = chunk.x / perlin_scale + 0.00000001f;
-            float y_cord = chunk.y / perlin_scale + 0.00000001f;
+            float x_cord = chunk.x / perlin_scale + 0.0001f;
+            float y_cord = chunk.y / perlin_scale + 0.0001f;
             float sample = Mathf.PerlinNoise(perlin_offset.x + x_cord, perlin_offset.y + y_cord);
+            Debug.Log((int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1));
             TileBase new_tile = ground_tiles[(int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1)];
             Ground.SetTile(chunk, new_tile);
         }
