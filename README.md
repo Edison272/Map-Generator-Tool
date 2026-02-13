@@ -54,9 +54,10 @@ See a Video Demo:
 https://youtu.be/QPgFElA61vU
 
 LIMITATIONS
-This tool runs SLOW depending on the settings. The tool has never caused the editor to crash, but there have been freak incidents where the generation takes several minutes to complete. Be careful with map size and chunk scale, and be ESPECIALLY careful with map scale. Massive maps take an incredibly long time to load. Be sure to keep these values low whenever possible.
+- This tool runs SLOW depending on the settings. The tool has never caused the editor to crash, but there have been freak incidents where the generation takes several minutes to complete. Be careful with map size and chunk scale, and be ESPECIALLY careful with map scale. Massive maps take an incredibly long time to load. Be sure to keep these values low whenever possible.
 
-Some Examples
+
+Some More Examples
 
 <img width="505" height="507" alt="image" src="https://github.com/user-attachments/assets/d2325bec-be5d-430e-a366-19ebe74818ad" />
 <img width="550" height="445" alt="image" src="https://github.com/user-attachments/assets/cbba3fec-caf5-47b8-9385-c792ae17b6cc" />
