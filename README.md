@@ -9,8 +9,9 @@ How To Find & Use This Tool
 2) In the inspector, you'll see that the Map Generator object contains a script called "MapGenScript" - this is where all the magic happens
 
 3) The two buttons at the top are pretty straightforward
-- "Generate The Map!" just generates the map. It takes a second or two to work though.
+- "Generate The Map!" just generates the map. It takes a second or two to work though. This is used for in-editor purposes
 - "Save The Map" will save a copy of the map to "Assets/MapGenTool/SavedMaps" as a prefab.
+
 4) Below the two buttons are the various inputs and parameters which can be used to change the map output. You get a short description of them if you hover over each parameter, but an explanaition here wouldn't hurt either. 
   - MANDATORY INPUTS - the tool WILL NOT WORK if one of these is missing
     - Map Object
@@ -48,4 +49,15 @@ How To Find & Use This Tool
     - Show Border - draws gray boxes where all wall chunks are located
     - Show Critical Chunks - draws green (start), gold (major objective), or red (final) on chunks with a major objective
     - Show Minor POI - if the previous debug tool is active, this will draw cyan boxes where all minor poi are, and will draw lines connecting them to the related Major Objective
+
+Some Examples
+
+<img width="505" height="507" alt="image" src="https://github.com/user-attachments/assets/d2325bec-be5d-430e-a366-19ebe74818ad" />
+<img width="550" height="445" alt="image" src="https://github.com/user-attachments/assets/cbba3fec-caf5-47b8-9385-c792ae17b6cc" />
+
+See a Video Demo:
+https://youtu.be/QPgFElA61vU
+
+Any Limitations?
+
 
