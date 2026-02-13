@@ -22,15 +22,21 @@ How To Find & Use This Tool
       - The generator uses a variety of Ground Tiles (hence the array) to generate terrain shapes
       - The generator uses a single Wall Tile to visually declare the physical bounds of the map
      
+  - MAP MAKER TYPE - 
+     
   - GEN PRESETS - the parameters which alter the resulting tilemap
-    - Map Size - Controls the general size of the map. nothing crazy
-    - Map Scale - Acts as a multiplier for the size of the map, and relative distance between POIs
-    - Perlin Scale - Controls how visually noisy the Ground tilemap's terrain pattern will look
-    - Variance Scale - Affects how spread-out or eratic the map's resulting shape is
-    - Chunk Size - The Generator builds the map in tens or hundreds of individual "chunks". this setting determines how large these chunks are
-    - Border Width - Controls how wide the physical border of the Wall tilemap will be
-    - Objectives - Sets the amount of major objectives which will appear on the map
-    - Minor Poi Per Objective - Sets the maximum possible amount of minor objectives which show up around the map
+    - Map Maker Type - determines the style of generation
+      - Blob - generates a somewhat circular map with major objectives evenly spread out. Encourages players to explore
+      - Level - generates a linear map with major objectives connect through a single line. Encourages players to get the job done
+    - Gen Preset - controls the output based on the Map Maker Type
+      - Map Size - Controls the general size of the map. nothing crazy
+      - Map Scale - Acts as a multiplier for the size of the map, and relative distance between POIs
+      - Perlin Scale - Controls how visually noisy the Ground tilemap's terrain pattern will look
+      - Variance Scale - Affects how spread-out or eratic the map's resulting shape is
+      - Chunk Size - The Generator builds the map in tens or hundreds of individual "chunks". this setting determines how large these chunks are
+      - Border Width - Controls how wide the physical border of the Wall tilemap will be
+      - Objectives - Sets the amount of major objectives which will appear on the map
+      - Minor Poi Per Objective - Sets the maximum possible amount of minor objectives which show up around the map
    
   - OTHER INPUTS/DATA - not very important for seeing results
     - Critical Locs - contains an array of all Major Objectives on the map
