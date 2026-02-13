@@ -180,9 +180,11 @@ public class BlobMaker : MapMaker
 
     public override void GeneratePOI(
         Dictionary<Vector2Int, MapChunk> all_chunks, 
-        MajorObjective[] critical_locs
+        MajorObjective[] critical_locs,
+        MapGenPreset gen_preset
     )
     {
+        List<Vector2Int> vectors_in_range = new List<Vector2Int>();
         for (int i = 2; i < critical_locs.Length; i++) // fill in betweens of the list
         {
             float highest_short = -Mathf.Infinity;
@@ -213,6 +215,31 @@ public class BlobMaker : MapMaker
                     highest_short = shortest_dist;
                 }
             }
+
+            vectors_in_range.Clear();
+            foreach(MapChunk chunk_in_range in all_chunks.Values)
+            {   
+                if (Array.IndexOf(critical_locs, chunk_in_range) != -1)
+                {
+                    continue;
+                }
+                if ((chunk_in_range.position - critical_locs[i].position).sqrMagnitude <= Mathf.Pow(gen_preset.map_scale, 2) * Mathf.Pow(gen_preset.chunk_size, 2))
+                {
+                    vectors_in_range.Add(chunk_in_range.position);
+                }
+            }
+            
+            int generate_poi = Random.Range(0, gen_preset.minor_poi_per_objective);
+            Vector2Int[] new_poi = new Vector2Int[generate_poi];
+            if (vectors_in_range.Count > 0)
+            {
+                for (int p = 0; p < generate_poi; p++)
+                {
+                    new_poi[p] = vectors_in_range[Random.Range(0, vectors_in_range.Count)];
+                }
+            }
+            critical_locs[i].SetMinorPOI(new_poi);
+
         }
     }
 }

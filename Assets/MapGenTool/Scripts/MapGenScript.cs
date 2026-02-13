@@ -91,7 +91,7 @@ public class MapGenScript : MonoBehaviour
 #region Generate POI
     private void GeneratePOI() // generate potential POI based off of chunks in the map
     {
-        map_maker.GeneratePOI(all_chunks, critical_locs);
+        map_maker.GeneratePOI(all_chunks, critical_locs, gen_preset);
     }
     #endregion
     private void GetPOIPaths() // declare pathway chunks between all POI
@@ -151,7 +151,7 @@ public class MapGenScript : MonoBehaviour
             float x_cord = chunk.x / perlin_scale + 0.0001f;
             float y_cord = chunk.y / perlin_scale + 0.0001f;
             float sample = Mathf.PerlinNoise(perlin_offset.x + x_cord, perlin_offset.y + y_cord);
-            Debug.Log((int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1));
+            //Debug.Log((int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1));
             TileBase new_tile = ground_tiles[(int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1)];
             Ground.SetTile(chunk, new_tile);
         }

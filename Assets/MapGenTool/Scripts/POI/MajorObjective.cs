@@ -49,6 +49,11 @@ public class MajorObjective
         this.next_poi = next;
     }
 
+    public void SetMinorPOI(Vector2Int[] minor_poi_arr)
+    {
+        minor_poi = minor_poi_arr;
+    }
+
     public void GenerateMinorPOI(int amount, float size)
     {
         if (amount <= 0)
