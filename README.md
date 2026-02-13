@@ -25,10 +25,21 @@ How To Find & Use This Tool
   - GEN PRESETS - the parameters which alter the resulting tilemap
     - Map Size - Controls the general size of the map. nothing crazy
     - Map Scale - Acts as a multiplier for the size of the map, and relative distance between POIs
-    - Perlin Scale -
-    - Variance Scale -
-    - Chunk Size -
-    - Border Width
-    - Objectives
-    - Minor Poi Per Objective
+    - Perlin Scale - Controls how visually noisy the Ground tilemap's terrain pattern will look
+    - Variance Scale - Affects how spread-out or eratic the map's resulting shape is
+    - Chunk Size - The Generator builds the map in tens or hundreds of individual "chunks". this setting determines how large these chunks are
+    - Border Width - Controls how wide the physical border of the Wall tilemap will be
+    - Objectives - Sets the amount of major objectives which will appear on the map
+    - Minor Poi Per Objective - Sets the maximum possible amount of minor objectives which show up around the map
+   
+  - OTHER INPUTS/DATA - not very important for seeing results
+    - Critical Locs - contains an array of all Major Objectives on the map
+    - Objective Point Prefas - contains all the possible gameobjects which can be instantiated at major objectives
+    - Active Objective Prefabs - contains all the Major Objective gameobjects produced by this generator
+   
+  - DEBUG TOOLS - used to see different map data
+    - Show Chunks - draws white boxes where all ground chunks are located
+    - Show Border - draws gray boxes where all wall chunks are located
+    - Show Critical Chunks - draws green (start), gold (major objective), or red (final) on chunks with a major objective
+    - Show Minor POI - if the previous debug tool is active, this will draw cyan boxes where all minor poi are, and will draw lines connecting them to the related Major Objective
 
