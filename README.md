@@ -49,16 +49,24 @@ How To Find & Use This Tool
     - Show Border - draws gray boxes where all wall chunks are located
     - Show Critical Chunks - draws green (start), gold (major objective), or red (final) on chunks with a major objective
     - Show Minor POI - if the previous debug tool is active, this will draw cyan boxes where all minor poi are, and will draw lines connecting them to the related Major Objective
+   
+See a Video Demo:
+https://youtu.be/QPgFElA61vU
+
+LIMITATIONS
+This tool runs SLOW depending on the settings. The tool has never caused the editor to crash, but there have been freak incidents where the generation takes several minutes to complete. Be careful with map size and chunk scale, and be ESPECIALLY careful with map scale. Massive maps take an incredibly long time to load. Be sure to keep these values low whenever possible.
 
 Some Examples
 
 <img width="505" height="507" alt="image" src="https://github.com/user-attachments/assets/d2325bec-be5d-430e-a366-19ebe74818ad" />
 <img width="550" height="445" alt="image" src="https://github.com/user-attachments/assets/cbba3fec-caf5-47b8-9385-c792ae17b6cc" />
+<img width="538" height="351" alt="image" src="https://github.com/user-attachments/assets/57626577-1000-4c11-b43d-3efa0d809907" />
+<img width="395" height="345" alt="image" src="https://github.com/user-attachments/assets/3269bf90-ed8d-400b-8e4e-807ba5106271" />
+<img width="580" height="399" alt="image" src="https://github.com/user-attachments/assets/6b9b2624-c064-4ddc-bdd5-2b60ce259b51" />
+<img width="844" height="319" alt="image" src="https://github.com/user-attachments/assets/deed2e47-0d83-4586-9372-b1e96ae4298b" />
+<img width="695" height="331" alt="image" src="https://github.com/user-attachments/assets/4fca8906-a2f0-4bcf-af7f-b79ae9c8ac0a" />
 
-See a Video Demo:
-https://youtu.be/QPgFElA61vU
 
-LIMITATIONS
-This tool runs SLOW depending on the settings. The tool has never caused the editor to crash, but there have been freak incidents where the generation takes several minutes to complete. Be careful with map size and chunk scale, and be ESPECIALLY careful with map scale. Massive maps take an incredibly long time to load.
+
 
 
