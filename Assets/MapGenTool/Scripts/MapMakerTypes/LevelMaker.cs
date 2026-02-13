@@ -81,6 +81,7 @@ public class LevelMaker : MapMaker
         Queue<Vector2Int> chunk_queue = new Queue<Vector2Int>();
         HashSet<Vector2Int> in_chunk_queue = new HashSet<Vector2Int>();
         List<Vector2Int> list_buffer = new List<Vector2Int>(); // use for branching
+        Vector2 map_center = Vector2.zero;
         
         // queue starting path chunks
         foreach(Vector2Int chunk in all_chunks.Keys)
@@ -256,6 +257,8 @@ public class LevelMaker : MapMaker
         // get neighbors
         foreach (Vector2Int curr_chunk in all_chunks.Keys)
         {
+            map_center += curr_chunk;
+            
             list_buffer.Clear();
             foreach (Vector2Int dir in Directions2D.eight_directions) // establish all chunk's dist from the final
             {
@@ -280,8 +283,9 @@ public class LevelMaker : MapMaker
                 break;
             }
         }
+        map_center /= all_chunks.Count;
 
-        return Vector2.zero;
+        return map_center;
         #endregion
     }
 

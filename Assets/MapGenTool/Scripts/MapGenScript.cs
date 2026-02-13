@@ -54,7 +54,6 @@ public class MapGenScript : MonoBehaviour
     [SerializeField] bool show_start_dist_heatmap = true;
     [SerializeField] bool show_path_dist_heatmap = true;
     [SerializeField] bool show_poi_territories = true;
-
     public void GenerateMap()
     {
         switch(map_maker_type)
