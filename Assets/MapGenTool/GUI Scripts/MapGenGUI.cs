@@ -10,6 +10,8 @@ public class MapGenGUI : Editor
         MapGenScript map_gui = (MapGenScript)target;
         if (GUILayout.Button(" Generate the Map! "))
         {
+            Repaint();
+            map_gui.EditorDestroyMapObjects();
             map_gui.GenerateMap();
         }
         if (GUILayout.Button(" Save the Map! "))

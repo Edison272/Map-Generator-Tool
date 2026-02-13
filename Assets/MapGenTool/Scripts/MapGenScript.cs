@@ -13,13 +13,12 @@ using Random = UnityEngine.Random;
 public class MapGenScript : MonoBehaviour
 {
     [SerializeField] GameObject MapObject;
-    [Header("Tilemaps")]
+    [Header("Assign Tilemaps (Mandatory)")]
     [SerializeField] Tilemap Ground;
     [SerializeField] Tilemap Wall;
-    [Header("Drawing Tiles")]
+    [Header("Assign Drawing Tiles \n(Must have atleast one tile per category)")]
     [SerializeField] TileBase[] ground_tiles;
     [SerializeField] TileBase wall_tile;
-    [SerializeField] TileBase path_tile;
     [Header("Generation Presets")]
     [SerializeField] MapMakerType map_maker_type;
     [SerializeField] MapMaker map_maker;
@@ -38,22 +37,30 @@ public class MapGenScript : MonoBehaviour
     public MajorObjective[] critical_locs = new MajorObjective[0]; // start & final + POI
 
     [Header("Draw Map")]
-    public float perlin_scale = 10;
     HashSet<Vector3Int> draw_ground = new HashSet<Vector3Int>();
     HashSet<Vector3Int> draw_path = new HashSet<Vector3Int>();
     HashSet<Vector3Int> draw_border = new HashSet<Vector3Int>();
 
     [Header("Objective Point")]
-    public GameObject objective_point_prefab;
+    public GameObject[] objective_point_prefabs;
+    public List<GameObject> active_objective_prefabs = new List<GameObject>();
 
     [Header("Gizmo Stuff")]
     [SerializeField] bool show_chunks = true;
     [SerializeField] bool show_border_chunks = true;
     [SerializeField] bool show_critical_chunks = true;
     [SerializeField] bool show_minor_poi = true;
-    [SerializeField] bool show_start_dist_heatmap = true;
-    [SerializeField] bool show_path_dist_heatmap = true;
-    [SerializeField] bool show_poi_territories = true;
+    // [SerializeField] bool show_start_dist_heatmap = true;
+    // [SerializeField] bool show_path_dist_heatmap = true;
+    // [SerializeField] bool show_poi_territories = true;
+    public void Awake()
+    {
+        // Destroy POI made by map in editor. When editor destroys, it uses EditorDestroyMapObjects
+        foreach(GameObject objective in active_objective_prefabs)
+        {
+            Destroy(objective);
+        }
+    }
     public void GenerateMap()
     {
         switch(map_maker_type)
@@ -67,7 +74,6 @@ public class MapGenScript : MonoBehaviour
         }
         GenerateChunks();
         GeneratePOI();
-        GetPOIPaths();
         DrawMap();
 
         spawn_chunk = critical_locs[0].main_chunk.position;
@@ -91,12 +97,19 @@ public class MapGenScript : MonoBehaviour
     private void GeneratePOI() // generate potential POI based off of chunks in the map
     {
         map_maker.GeneratePOI(all_chunks, critical_locs, gen_preset);
+        active_objective_prefabs.Clear();
+        foreach (MajorObjective mo in critical_locs)
+        {
+            if (objective_point_prefabs.Length > 0)
+            {
+                GameObject random_objective = objective_point_prefabs[Random.Range(0, objective_point_prefabs.Length)];
+                active_objective_prefabs.Add(
+                    Instantiate(random_objective, mo.main_chunk.world_center_position, Quaternion.identity)
+                );
+            }
+        }
     }
     #endregion
-    private void GetPOIPaths() // declare pathway chunks between all POI
-    {
-
-    }
 
 #region Draw Map
     private void DrawMap() // put tiles on the map ts
@@ -147,8 +160,8 @@ public class MapGenScript : MonoBehaviour
         Vector2 perlin_offset = new Vector2(Random.Range(100, -100), Random.Range(100, -100));
         foreach(Vector3Int chunk in draw_ground)
         {
-            float x_cord = chunk.x / perlin_scale + 0.0001f;
-            float y_cord = chunk.y / perlin_scale + 0.0001f;
+            float x_cord = chunk.x / gen_preset.perlin_scale + 0.0001f;
+            float y_cord = chunk.y / gen_preset.perlin_scale + 0.0001f;
             float sample = Mathf.PerlinNoise(perlin_offset.x + x_cord, perlin_offset.y + y_cord);
             //Debug.Log((int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1));
             TileBase new_tile = ground_tiles[(int)Mathf.Clamp(sample * ground_tiles.Length, 0, ground_tiles.Length-1)];
@@ -240,7 +253,13 @@ public class MapGenScript : MonoBehaviour
             Debug.DrawLine(point * gen_preset.chunk_size, point * gen_preset.chunk_size + dir * gen_preset.chunk_size/4, line_color);
         }
     }
-
+    public void EditorDestroyMapObjects()
+    {
+        foreach(GameObject objective in active_objective_prefabs)
+        {
+            DestroyImmediate(objective);
+        }
+    }
     #endregion
     #region Gizmos
     void OnDrawGizmosSelected()

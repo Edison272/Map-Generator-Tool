@@ -10,6 +10,8 @@ public class MapGenPreset
     [Range(10, 1000)] public int map_size = 40;
     [Tooltip("Increases distance between POIs and sets multiplier for map size")]
     [Range(1f, 20f)] public int map_scale = 1;
+    [Tooltip("Set the visual noisiness of the terrain")]
+    [Range(1f, 1000f)]public float perlin_scale = 10;
 
     public const float VarianceCap = 4f;
     [Tooltip("Affects how spreadout or lanky the resulting map's shape is")]

@@ -21,7 +21,7 @@ public class MapChunk
     {
         position = pos;
         center_position = new Vector2(pos.x + 0.5f, pos.y + 0.5f);
-        world_center_position = center_position * MapGenScript.chunk_size;
+        world_center_position = pos * MapGenScript.chunk_size;
         
     }
 
