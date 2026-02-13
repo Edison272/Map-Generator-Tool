@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Analytics;
+using UnityEngine.SocialPlatforms;
 using UnityEngine.Tilemaps;
 
 using Random = UnityEngine.Random;
 
 public class MapGenScript : MonoBehaviour
 {
+    [SerializeField] GameObject MapObject;
     [Header("Tilemaps")]
     [SerializeField] Tilemap Ground;
     [SerializeField] Tilemap Wall;
@@ -18,313 +21,82 @@ public class MapGenScript : MonoBehaviour
     [SerializeField] TileBase wall_tile;
     [SerializeField] TileBase path_tile;
     [Header("Generation Presets")]
+    [SerializeField] MapMakerType map_maker_type;
+    [SerializeField] MapMaker map_maker;
     public MapGenPreset gen_preset;
+    public static int chunk_size;
     public static readonly Vector2Int START_POS = Vector2Int.zero;
     // each chunk expands to the TOP RIGHT when it becomes a 2D area instead of a single point
     public Dictionary<Vector2Int, MapChunk> all_chunks = new Dictionary<Vector2Int, MapChunk>();
-    private Dictionary<Vector2Int, Vector2Int> adj_chunks = new Dictionary<Vector2Int, Vector2Int>();
-
+    private HashSet<Vector2Int> border_chunks = new HashSet<Vector2Int>();
+    private HashSet<Vector2Int> path_chunks = new HashSet<Vector2Int>(); // chunks containing the paths between POI
     // important chunks/positions
     public Vector2Int spawn_chunk {get; private set;} // where the player spawns in
     public Vector2Int final_chunk {get; private set;} // chunk with the main objective
     public Vector2 map_center {get; private set;} // duh
 
-    public MapChunk[] critical_locs {get; private set;} // start & final + POI
-    // bounds int for critical_los
-    BoundsInt crit_loc_bounds;
+    public MajorObjective[] critical_locs = new MajorObjective[0]; // start & final + POI
 
-    // format is chunk, chunk + 1,0 , chunk + 1,1 , chunk + 0,1
-    public HashSet<MapQuad> quads {get; private set;} = new HashSet<MapQuad>();
-
-    HashSet<Vector3Int> draw_ground = new HashSet<Vector3Int>();
-    HashSet<Vector3Int> draw_border = new HashSet<Vector3Int>();
     [Header("Draw Map")]
     public float perlin_scale = 10;
+    HashSet<Vector3Int> draw_ground = new HashSet<Vector3Int>();
+    HashSet<Vector3Int> draw_path = new HashSet<Vector3Int>();
+    HashSet<Vector3Int> draw_border = new HashSet<Vector3Int>();
+
+    [Header("Objective Point")]
+    public GameObject objective_point_prefab;
 
     [Header("Gizmo Stuff")]
     [SerializeField] bool show_chunks = true;
-    [SerializeField] bool show_adj_chunks = true;
+    [SerializeField] bool show_border_chunks = true;
     [SerializeField] bool show_critical_chunks = true;
-    [SerializeField] bool show_quads = true;
+    [SerializeField] bool show_minor_poi = true;
+    [SerializeField] bool show_start_dist_heatmap = true;
+    [SerializeField] bool show_path_dist_heatmap = true;
+    [SerializeField] bool show_poi_territories = true;
 
     public void GenerateMap()
     {
-        critical_locs = new MapChunk[2 + gen_preset.objectives];
+        switch(map_maker_type)
+        {
+            case MapMakerType.Blob:
+                map_maker = new BlobMaker();
+                break;
+            case MapMakerType.Level:
+                map_maker = new LevelMaker();
+                break;
+        }
         GenerateChunks();
         GeneratePOI();
         GetPOIPaths();
         DrawMap();
+
+        spawn_chunk = critical_locs[0].main_chunk.position;
+        final_chunk = critical_locs[critical_locs.Length-1].main_chunk.position;
     }
 
-    #region Gizmos
-    void OnDrawGizmosSelected()
-    {
-        if (show_chunks)
-        {
-            foreach (Vector2Int chunk in all_chunks.Keys)
-            {
-                DrawChunk(chunk, Color.white);
-            }
-        }
-        if (show_adj_chunks)
-        {
-            foreach (Vector2Int chunk in adj_chunks.Keys)
-            {
-                DrawChunk(chunk, Color.grey);
-            }
-        }
-        if (show_critical_chunks)
-        {
-            //DrawChunk(START_POS, Color.black);
-            if (all_chunks.Keys.Count > 0) // only perform if something actually geenrated
-            {
-                DrawChunk(final_chunk, Color.red);
-                DrawChunk(spawn_chunk, Color.green);
-                foreach (MapChunk chunk in critical_locs)
-                {
-                    if (chunk is MapQuad)
-                    {
-                        MapQuad quad = (MapQuad)chunk;
-                        DrawQuad(quad.four_corners, Color.yellow);
-                        DrawStar(quad.position, Color.yellow);
-                    }
-                    else if (chunk.position != spawn_chunk && chunk.position != final_chunk)
-                    {
-                        DrawChunk(Vector2Int.FloorToInt(chunk.position), Color.yellow);
-                    }
-
-                    foreach(MapChunk other_chunk in critical_locs)
-                    {
-                        Debug.DrawLine((Vector2)chunk.position * gen_preset.chunk_size, (Vector2)other_chunk.position * gen_preset.chunk_size);
-                    }
-                }
-            }
-        }
-        if (show_quads) {
-            foreach (MapQuad quad in quads)
-            {
-                DrawQuad(quad.four_corners, Color.cyan);
-            }
-        }
-    }
-    #endregion
-
-    #region Generate Chunks
+#region Generate Chunks
     private void GenerateChunks() // generate the chunks and declare the start & final pos
     {
         // initialize data holders
         all_chunks.Clear();
-        HashSet<Vector2Int> in_chunk_queue = new HashSet<Vector2Int>();
-        adj_chunks.Clear();
-        List<Vector2Int> list_buffer = new List<Vector2Int>(); // use for branching
-        Vector2Int[] adjacent_array = gen_preset.four_adj_tiles ? Directions2D.four_directions : Directions2D.eight_directions;
-        Directions2D.DirArray dir_array_type = gen_preset.four_adj_tiles ? Directions2D.DirArray.HORZ_WEIGHT_FOUR : Directions2D.DirArray.HORZ_WEIGHT_EIGHT;
-        
-        // get the first chunk
-        Queue<Vector2Int> chunk_queue = new Queue<Vector2Int> {};
-        chunk_queue.Enqueue(START_POS);
-        in_chunk_queue.Add(START_POS);
-        foreach (Vector2Int adjacent in adjacent_array) // update adjacent chunks
-        {
-            Vector2Int new_chunk = START_POS + adjacent;
-            adj_chunks[new_chunk] = new_chunk;
-        }
+        border_chunks.Clear();
+        path_chunks.Clear();
+        critical_locs = new MajorObjective[1 + gen_preset.objectives];
 
-        // values for final pos and spawn pos
-        final_chunk = START_POS;
-        for (int i = 0; i < gen_preset.map_chunks && chunk_queue.Count > 0; i++) {
-            // add chunk to the hashset
-            Vector2Int curr_chunk = chunk_queue.Dequeue();
-            in_chunk_queue.Remove(curr_chunk);
-            all_chunks[curr_chunk] = new MapChunk(curr_chunk);
-
-            // final pos is furthest from the start position
-            if (curr_chunk.sqrMagnitude > final_chunk.sqrMagnitude)
-            {
-                final_chunk = curr_chunk;
-            } 
-
-            // see where the current chunk can branch to
-            Directions2D.ValidPositionsFromPoint(list_buffer, dir_array_type, curr_chunk, all_chunks, in_chunk_queue);
-            // preform semi-random branch
-            int branches = Random.Range(gen_preset.min_chunk_branching, gen_preset.max_chunk_branching + 1);
-            for (int b = 0; b < branches; b++)
-            {
-                Vector2Int new_chunk = curr_chunk;
-                int randint = 0;
-                if (list_buffer.Count > 0) // prevent overlapping with preexisting chunks
-                {
-                    randint = Random.Range(0, list_buffer.Count);
-                    new_chunk = list_buffer[randint];
-                    list_buffer.RemoveAt(randint);
-                } 
-                else
-                {
-                    // if the algo still needs to branch but all adjacent spots are taken, just queue a random adjacent chunk
-                    randint = Random.Range(0, adj_chunks.Keys.Count);
-                    new_chunk = adj_chunks.Keys.ElementAt(randint);
-                }
-                if ((i+1 + chunk_queue.Count) < gen_preset.map_chunks) // make sure the chunks in queue dont go outta control
-                {
-                    if (in_chunk_queue.Add(new_chunk)) {
-                        adj_chunks.Remove(new_chunk);
-                        chunk_queue.Enqueue(new_chunk);
-                    }
-
-                    foreach (Vector2Int adjacent in adjacent_array) // update adjacent chunks
-                    {
-                        Vector2Int new_adj_chunk = new_chunk + adjacent;
-                        if (!all_chunks.ContainsKey(new_adj_chunk) && !in_chunk_queue.Contains(new_adj_chunk))
-                        {
-                            // add to adjacent chunks list/dict
-                            adj_chunks[new_adj_chunk] = new_adj_chunk;
-                        }
-                    }
-                }
-            }
-        }
-        // get spawn position based on tile step distance
-        // set neighbors of each chunk
-        chunk_queue.Clear();
-        chunk_queue.Enqueue(final_chunk);
-        all_chunks[final_chunk].dist_from_final = 0;
-        for (int i = 0; i < all_chunks.Count; i ++)
-        {
-            Vector2Int curr_chunk = chunk_queue.Dequeue();
-            list_buffer.Clear();
-            foreach (Vector2Int dir in Directions2D.eight_directions) // establish all chunk's dist from the final
-            {
-                Vector2Int next_chunk = curr_chunk + dir;
-                if (all_chunks.ContainsKey(next_chunk) && all_chunks[next_chunk].dist_from_final == -1)
-                {
-                    all_chunks[next_chunk].dist_from_final = all_chunks[curr_chunk].dist_from_final + 1;
-                    chunk_queue.Enqueue(next_chunk);
-                }
-
-                // find neighbors
-                if (all_chunks.ContainsKey(next_chunk))
-                {
-                    list_buffer.Add(dir);
-                }
-            }
-            // set neighbors
-            all_chunks[curr_chunk].SetNeighbors(list_buffer);
-
-            if (chunk_queue.Count == 0)
-            {
-                break;
-            }
-        }
-
-        // find spawn chunk, map center, draw tiles, and chunk connections
-        spawn_chunk = final_chunk;
-        map_center = Vector2.zero;
-        foreach(Vector2Int pos in all_chunks.Keys)
-        {
-            map_center += pos;
-            if (all_chunks[pos].dist_from_final == all_chunks[spawn_chunk].dist_from_final)
-            {
-                if ((final_chunk - pos).sqrMagnitude > (final_chunk - spawn_chunk).sqrMagnitude)
-                spawn_chunk = pos;
-            } 
-            else if (all_chunks[pos].dist_from_final > all_chunks[spawn_chunk].dist_from_final)
-            {
-                spawn_chunk = pos;
-            }
-        }
-        map_center /= all_chunks.Keys.Count;
-
-        // declare first and last pos of critical locs
-        critical_locs[0] = all_chunks[spawn_chunk];
-        critical_locs[1] = all_chunks[final_chunk];
+        map_center = map_maker.GenerateMap(all_chunks, border_chunks, path_chunks, critical_locs, gen_preset);
     }
-    #endregion
+#endregion
 
-    #region Generate POI
+#region Generate POI
     private void GeneratePOI() // generate potential POI based off of chunks in the map
     {
-        for (int i = 2; i < critical_locs.Length; i++) // fill in betweens of the list
-        {
-            float highest_short = -Mathf.Infinity;
-            foreach(MapChunk mc in all_chunks.Values)
-            {   
-                float shortest_dist = Mathf.Infinity;
-                if (Array.IndexOf(critical_locs, mc) != -1)
-                {
-                    continue;
-                }
-
-                for (int l = 0; l < critical_locs.Length; l++)
-                {
-                    if (critical_locs[l] == null)
-                    {
-                        continue; // exit loop bc theres no more critical locs to compare to
-                    }
-                    float dist = (mc.position - critical_locs[l].position).sqrMagnitude;
-                    if (dist < shortest_dist)
-                    {
-                        shortest_dist = dist;
-                    }
-                }
-
-                if (shortest_dist > highest_short)
-                {
-                    critical_locs[i] = mc;
-                    highest_short = shortest_dist;
-                }
-            }
-        }
-
-        // get bounds of critical locs
-        int x_max = -10000, x_min = 10000, y_max = -10000, y_min = 10000;
-        foreach(MapChunk chunk in critical_locs)
-        {
-            Vector2 chunk_pos = chunk.position;
-            if (chunk_pos.x > x_max)
-            {
-                x_max = (int)chunk_pos.x;
-            } 
-            else if (chunk_pos.x < x_min)
-            {
-                x_min = (int)chunk_pos.x;
-            }
-            if (chunk_pos.y > y_max)
-            {
-                y_max = (int)chunk_pos.x;
-            } 
-            else if (chunk_pos.y < y_min)
-            {
-                y_min = (int)chunk_pos.y;
-            }
-        }
-        crit_loc_bounds = new BoundsInt(x_min, y_min, 0, x_max, y_max, 0);
+        map_maker.GeneratePOI(all_chunks, critical_locs);
     }
     #endregion
     private void GetPOIPaths() // declare pathway chunks between all POI
     {
-        // do some delauney crap with a Bowyer Watson FX
-        TriangleSet super_tri = new TriangleSet(
-            new Vector2(0, crit_loc_bounds.yMax * 100),
-            new Vector2(crit_loc_bounds.xMax * 100, crit_loc_bounds.yMin * 100),
-            new Vector2(crit_loc_bounds.xMin * 100, crit_loc_bounds.yMin * 100)
-        );
 
-        foreach (MapChunk chunk in critical_locs)
-        {
-            foreach (MapChunk other_chunk in critical_locs)
-            {
-                if (other_chunk != chunk)
-                {
-                    foreach(MapChunk other_other_chunk in critical_locs)
-                    {
-                        if (other_chunk != chunk && other_other_chunk != chunk)
-                        {
-                            
-                        }
-                    }
-                }
-            }
-        }
     }
 
 #region Draw Map
@@ -386,6 +158,17 @@ public class MapGenScript : MonoBehaviour
     }
 #endregion
 
+#region Save Map File
+    public void SaveMapFile()
+    {
+        string filename = "MapAsset";
+        string local_path = "Assets/MapGenTool/SavedMaps/" + filename + ".prefab";
+
+        local_path = AssetDatabase.GenerateUniqueAssetPath(local_path);
+
+        PrefabUtility.SaveAsPrefabAssetAndConnect(MapObject, local_path, InteractionMode.UserAction);
+    }
+#endregion
 #region Tools 
     public Vector2 GetChunkWorldPos(Vector2Int chunk)
     {
@@ -460,11 +243,60 @@ public class MapGenScript : MonoBehaviour
     }
 
     #endregion
-
+    #region Gizmos
+    void OnDrawGizmosSelected()
+    {
+        if (show_chunks)
+        {
+            foreach (Vector2Int chunk in all_chunks.Keys)
+            {
+                DrawChunk(chunk, Color.white);
+            }
+        }
+        if (show_border_chunks)
+        {
+            foreach (Vector2Int chunk in border_chunks)
+            {
+                DrawChunk(chunk, Color.grey);
+            }
+        }
+        if (show_critical_chunks)
+        {
+            DrawChunk(START_POS, Color.black);
+            DrawChunk(final_chunk, Color.red);
+            DrawChunk(spawn_chunk, Color.green);
+            for (int i = 0; i < critical_locs.Length; i++)
+            {
+                MapChunk chunk = critical_locs[i].main_chunk;
+                if (chunk.position != spawn_chunk && chunk.position != final_chunk)
+                {
+                    DrawChunk(chunk.position, Color.yellow);
+                    if (show_minor_poi)
+                    {
+                        foreach(Vector2Int minor_poi in critical_locs[i].minor_poi)
+                        {
+                            Debug.DrawLine((Vector2)chunk.position * chunk_size, (Vector2)minor_poi * chunk_size);
+                            DrawChunk(minor_poi, Color.cyan);
+                        }
+                    }
+                }
+                if (i < critical_locs.Length-1)
+                {
+                    Debug.DrawLine((Vector2)chunk.position * chunk_size, (Vector2)critical_locs[i+1].main_chunk.position * chunk_size);
+                }
+                // foreach(MapChunk other_chunk in critical_locs)
+                // {
+                //     Debug.DrawLine((Vector2)chunk.position * chunk_size, (Vector2)other_chunk.position * chunk_size);
+                // }
+            }
+        }
+    }
+    #endregion
     #region Serialization
     public void OnValidate()
     {
         gen_preset.OnGenValidate();
+        chunk_size = gen_preset.chunk_size;
     }
     #endregion
 }
