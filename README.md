@@ -56,6 +56,8 @@ https://youtu.be/QPgFElA61vU
 LIMITATIONS
 - This tool runs SLOW depending on the settings. The tool has never caused the editor to crash, but there have been freak incidents where the generation takes several minutes to complete. Be careful with map size and chunk scale, and be ESPECIALLY careful with map scale. Massive maps take an incredibly long time to load. Be sure to keep these values low whenever possible.
 
+PLAYTESTING NOTES
+https://docs.google.com/document/d/1SKFPx8l2jPScADJrU_zhvdJTaEbd7r4VUBpZRrv_N3k/edit?usp=sharing
 
 Some More Examples
 
