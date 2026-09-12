@@ -1,7 +1,7 @@
 Welcome to the Map Generator Tool (name pending)!
 
 What Does It Do?
-- As the name implies, it generations a tilemap for the users whenever they want, allowing them to either save the map as an asset, or procedurally generate the map for whatever projects they have in mind. The specific map this generator is trying to make is an "objective-oriented" map which means that aside from just generating a map itself, it will also generate locations for different placs of interest accross the map, which can be used as a basis for simple level designs
+- It's a map generator!, it generations a tilemap for the users whenever they want, allowing them to either save the map as an asset, or procedurally generate the map for whatever projects they have in mind. The specific map this generator is trying to make is an "objective-oriented" map which means that aside from just generating a map itself, it will also generate locations for different placs of interest accross the map, which can be used as a basis for simple level designs
 
 How To Find & Use This Tool
 1) When you go to the Scenes folder and open up the "SampleScene", you'll see an object called the "Map Generator" in the heirarchy window. Select it
